@@ -191,8 +191,11 @@ export default function Players() {
   }, [rows, sortBy, sortDir])
 
   const selectedPlayer = rows.find(r => r.id === selectedPlayerId) || null
-  const efficiency = selectedPlayer?.points
-    ? Math.round((selectedPlayer.points / Math.max(selectedPlayer.points + selectedPlayer.pointsAgainst, 1)) * 100)
+  const efficiency = selectedPlayer?.framesPlayed
+    ? Math.round((selectedPlayer.framesWon / selectedPlayer.framesPlayed) * 100)
+    : 0
+  const pointsEfficiency = selectedPlayer?.totalPossiblePoints
+    ? Math.round((selectedPlayer.points / selectedPlayer.totalPossiblePoints) * 100)
     : 0
 
   const handleSort = (nextSortBy) => {
@@ -252,16 +255,16 @@ export default function Players() {
                       <SortHeader label="Ekipa" sortKey="teamName" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} align="left" />
                     </th>
                     <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">
-                      <SortHeader label="OU" hint="Odigrane utakmice" sortKey="matchesPlayed" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+                      <SortHeader label="Utk" hint="Odigrane utakmice" sortKey="matchesPlayed" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">
-                      <SortHeader label="ME" hint="Odigrani mečevi" sortKey="framesPlayed" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+                      <SortHeader label="Meč" hint="Odigrani mečevi" sortKey="framesPlayed" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">
-                      <SortHeader label="Pob" sortKey="framesWon" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+                      <SortHeader label="Pob" hint="Pobjede u mečevima" sortKey="framesWon" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell">
-                      <SortHeader label="%" sortKey="frameWinPct" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+                      <SortHeader label="%" hint="Učinak u mečevima" sortKey="frameWinPct" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">
                       <SortHeader label="Bodovi" sortKey="points" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
@@ -312,25 +315,38 @@ export default function Players() {
 
             {selectedPlayer && (
               <div className="hidden xl:block xl:col-span-4 xl:sticky xl:top-20 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-5 sm:p-6 shadow-sm dark:shadow-none">
-                <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+                <div className="grid grid-cols-2 items-start justify-between gap-4 mb-5 flex-wrap">
                   <div>
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-widest mb-1">Pregled igrača</p>
-                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">{selectedPlayer.name}</h2>
+                    <h2 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] wrap-break-word">{selectedPlayer.name}</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedPlayer.teamName}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-600">Učinkovitost</div>
-                    <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{efficiency}%</div>
+                    <div className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-600">Učinak</div>
+                    <div className="flex items-baseline justify-end gap-2 mt-0.5">
+                      <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{efficiency}%</span>
+                      <span className="text-gray-300 dark:text-gray-700 text-sm">•</span>
+                      <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{pointsEfficiency}%</span>
+                    </div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mt-0.5">Mečevi • Bodovi</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   {[
                     { label: 'Utakmice', value: selectedPlayer.matchesPlayed },
-                    { label: 'Mečevi', value: selectedPlayer.framesPlayed },
-                    { label: 'Pobjede', value: selectedPlayer.framesWon },
+                    {
+                      label: 'Pobjede (mečevi)',
+                      value: (
+                        <>
+                          <span>{selectedPlayer.framesWon}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">/{selectedPlayer.framesPlayed}</span>
+                        </>
+                      ),
+                    },
                     {
                       label: 'Bodovi',
+                      fullWidth: true,
                       value: (
                         <>
                           <span>{selectedPlayer.points}</span>
@@ -339,7 +355,7 @@ export default function Players() {
                       ),
                     },
                   ].map(kpi => (
-                    <div key={kpi.label} className="bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center">
+                    <div key={kpi.label} className={`bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center ${kpi.fullWidth ? 'col-span-2' : ''}`}>
                       <div className="text-xl font-black text-gray-900 dark:text-white tabular-nums">{kpi.value}</div>
                       <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mt-0.5">{kpi.label}</div>
                     </div>
@@ -403,7 +419,7 @@ export default function Players() {
                 <div className="flex items-start justify-between gap-4 mb-5">
                   <div>
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-widest mb-1">Pregled igrača</p>
-                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">{selectedPlayer.name}</h2>
+                    <h2 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] wrap-break-word">{selectedPlayer.name}</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedPlayer.teamName}</p>
                   </div>
                   <button
@@ -420,10 +436,18 @@ export default function Players() {
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   {[
                     { label: 'Utakmice', value: selectedPlayer.matchesPlayed },
-                    { label: 'Mečevi', value: selectedPlayer.framesPlayed },
-                    { label: 'Pobjede', value: selectedPlayer.framesWon },
+                    {
+                      label: 'Pobjede (mečevi)',
+                      value: (
+                        <>
+                          <span>{selectedPlayer.framesWon}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">/{selectedPlayer.framesPlayed}</span>
+                        </>
+                      ),
+                    },
                     {
                       label: 'Bodovi',
+                      fullWidth: true,
                       value: (
                         <>
                           <span>{selectedPlayer.points}</span>
@@ -432,7 +456,7 @@ export default function Players() {
                       ),
                     },
                   ].map(kpi => (
-                    <div key={kpi.label} className="bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center">
+                    <div key={kpi.label} className={`bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center ${kpi.fullWidth ? 'col-span-2' : ''}`}>
                       <div className="text-xl font-black text-gray-900 dark:text-white tabular-nums">{kpi.value}</div>
                       <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mt-0.5">{kpi.label}</div>
                     </div>
@@ -440,8 +464,13 @@ export default function Players() {
                 </div>
 
                 <div className="text-right mb-3">
-                  <span className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-600">Učinkovitost </span>
-                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{efficiency}%</span>
+                  <div className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-600">Učinak</div>
+                  <div className="flex items-baseline justify-end gap-2 mt-0.5">
+                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{efficiency}%</span>
+                    <span className="text-gray-300 dark:text-gray-700 text-xs">•</span>
+                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{pointsEfficiency}%</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mt-0.5">Mečevi • Bodovi</div>
                 </div>
 
                 {selectedPlayer.trendData.length === 0 ? (
