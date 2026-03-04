@@ -5,7 +5,6 @@ import StandingsTable from '../components/StandingsTable'
 export default function Home() {
   const [standings, setStandings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({ teams: 0, matches: 0, points: 0 })
 
   useEffect(() => {
     async function load() {
@@ -20,7 +19,6 @@ export default function Home() {
       teams.forEach(t => { pointsMap[t.id] = 0 })
 
       const matchCount = {}
-      let totalPoints = 0
 
       matches?.forEach(m => {
         matchCount[m.home_team_id] = (matchCount[m.home_team_id] || 0) + 1
@@ -28,7 +26,6 @@ export default function Home() {
         m.frames?.forEach(f => {
           pointsMap[m.home_team_id] = (pointsMap[m.home_team_id] || 0) + (f.home_score || 0)
           pointsMap[m.away_team_id] = (pointsMap[m.away_team_id] || 0) + (f.away_score || 0)
-          totalPoints += (f.home_score || 0) + (f.away_score || 0)
         })
       })
 
@@ -40,7 +37,6 @@ export default function Home() {
           matches: matchCount[t.id] || 0,
         })).sort((a, b) => b.points - a.points)
       )
-      setStats({ teams: teams.length, matches: matches?.length || 0, points: totalPoints })
       setLoading(false)
     }
     load()
@@ -53,21 +49,6 @@ export default function Home() {
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-1">Ljestvica lige</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm">Poredano po ukupno osvojenim bodovima</p>
       </div>
-
-      {!loading && stats.teams > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { label: 'Ekipe', value: stats.teams },
-            { label: 'Utakmice', value: stats.matches },
-            { label: 'Bodovi', value: stats.points },
-          ].map(s => (
-            <div key={s.label} className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-xl px-4 py-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tabular-nums">{s.value}</div>
-              <div className="text-gray-400 dark:text-gray-500 text-xs font-medium mt-0.5">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-gray-400 dark:text-gray-600">

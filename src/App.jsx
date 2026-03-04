@@ -4,8 +4,10 @@ import { ThemeProvider } from './context/ThemeContext'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
+import Players from './pages/Players'
 import Matches from './pages/Matches'
 import MatchDetail from './pages/MatchDetail'
+import Team from './pages/Team'
 import Login from './pages/Login'
 import Dashboard from './pages/admin/Dashboard'
 import AddResult from './pages/admin/AddResult'
@@ -20,6 +22,8 @@ export default function App() {
             <Navbar />
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/players" element={<Players />} />
+              <Route path="/teams/:id" element={<Team />} />
               <Route path="/matches" element={<Matches />} />
               <Route path="/matches/:id" element={<MatchDetail />} />
               <Route path="/login" element={<Login />} />

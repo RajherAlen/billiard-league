@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const MEDALS = ['🥇', '🥈', '🥉']
 
 export default function StandingsTable({ standings }) {
@@ -22,9 +24,9 @@ export default function StandingsTable({ standings }) {
                 }
               </td>
               <td className="px-4 py-4">
-                <span className={`font-semibold ${i === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
+                <Link to={`/teams/${row.team_id}`} className={`font-semibold hover:underline underline-offset-2 ${i === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
                   {row.team_name}
-                </span>
+                </Link>
                 {i === 0 && row.points > 0 && (
                   <span className="ml-2 text-[10px] font-bold bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                     Lider

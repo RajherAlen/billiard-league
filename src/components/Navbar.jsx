@@ -63,6 +63,7 @@ export default function Navbar() {
 
           <div className="hidden sm:flex items-center gap-1">
             <NavLink to="/">Ljestvica</NavLink>
+            <NavLink to="/players">Igrači</NavLink>
             <NavLink to="/matches">Utakmice</NavLink>
             {session && <NavLink to="/admin">Admin</NavLink>}
             <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-1" />
@@ -107,6 +108,7 @@ export default function Navbar() {
         {menuOpen && (
           <div className="sm:hidden border-t border-gray-100 dark:border-white/5 py-3 flex flex-col gap-1 pb-4">
             <NavLink to="/">Ljestvica</NavLink>
+            <NavLink to="/players">Igrači</NavLink>
             <NavLink to="/matches">Utakmice</NavLink>
             {session ? (
               <>

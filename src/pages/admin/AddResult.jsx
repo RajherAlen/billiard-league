@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import CustomSelect from '../../components/CustomSelect'
@@ -23,6 +23,74 @@ const GAME_COLORS = {
 }
 
 const inputCls = 'w-full rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border border-gray-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all'
+
+function formatISOToDMY(value) {
+  if (!value) return ''
+  const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!isoMatch) return String(value)
+  const [, year, month, day] = isoMatch
+  return `${day}/${month}/${year}`
+}
+
+function getTodayDMY() {
+  const today = new Date()
+  const day = String(today.getDate()).padStart(2, '0')
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const year = today.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function getTodayISO() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function parseDMYToISO(value) {
+  const raw = String(value || '').trim()
+  let dayStr = ''
+  let monthStr = ''
+  let yearStr = ''
+
+  const compactMatch = raw.match(/^(\d{2})(\d{2})(\d{4})$/)
+  if (compactMatch) {
+    [, dayStr, monthStr, yearStr] = compactMatch
+  } else {
+    const match = raw.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/)
+    if (!match) return null
+    dayStr = match[1]
+    monthStr = match[2]
+    yearStr = match[3]
+  }
+
+  const dayPadded = String(Number(dayStr)).padStart(2, '0')
+  const monthPadded = String(Number(monthStr)).padStart(2, '0')
+
+  const day = Number(dayPadded)
+  const month = Number(monthPadded)
+  const year = Number(yearStr)
+  const parsed = new Date(year, month - 1, day)
+
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) return null
+
+  return `${yearStr}-${monthPadded}-${dayPadded}`
+}
+
+function normalizeStoredDate(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+  return parseDMYToISO(raw) || ''
+}
+
+function normalizeDMYInput(value) {
+  return String(value || '')
+    .replace(/[.-]/g, '/')
+    .replace(/[^\d/]/g, '')
+    .slice(0, 10)
+}
 
 const EMPTY_FRAMES = FRAME_TEMPLATE.map(t => ({
   ...t,
@@ -66,14 +134,16 @@ function ScoreCounter({ value, onChange, max }) {
 
 export default function AddResult() {
   const navigate = useNavigate()
+  const draft = loadDraft()
+  const datePickerRef = useRef(null)
 
   // Restore from session storage on mount
-  const [step, setStep] = useState(() => loadDraft().step ?? 1)
-  const [homeTeamId, setHomeTeamId] = useState(() => loadDraft().homeTeamId ?? '')
-  const [awayTeamId, setAwayTeamId] = useState(() => loadDraft().awayTeamId ?? '')
-  const [matchDate, setMatchDate] = useState(() => loadDraft().matchDate ?? new Date().toISOString().slice(0, 10))
-  const [notes, setNotes] = useState(() => loadDraft().notes ?? '')
-  const [frames, setFrames] = useState(() => loadDraft().frames ?? EMPTY_FRAMES)
+  const [step, setStep] = useState(() => draft.step ?? 1)
+  const [homeTeamId, setHomeTeamId] = useState(() => draft.homeTeamId ?? '')
+  const [awayTeamId, setAwayTeamId] = useState(() => draft.awayTeamId ?? '')
+  const [matchDate, setMatchDate] = useState(() => formatISOToDMY(normalizeStoredDate(draft.matchDate) || getTodayISO()))
+  const [notes, setNotes] = useState(() => draft.notes ?? '')
+  const [frames, setFrames] = useState(() => draft.frames ?? EMPTY_FRAMES)
 
   const [teams, setTeams] = useState([])
   const [players, setPlayers] = useState([])
@@ -105,6 +175,7 @@ export default function AddResult() {
   const handleStep1 = (e) => {
     e.preventDefault()
     if (homeTeamId === awayTeamId) { setError('Domaća i gostujuća ekipa moraju biti različite.'); return }
+    if (!parseDMYToISO(matchDate)) { setError('Datum mora biti u formatu dd/mm/yyyy.'); return }
     setError('')
     setStep(2)
   }
@@ -114,7 +185,7 @@ export default function AddResult() {
     setStep(1)
     setHomeTeamId('')
     setAwayTeamId('')
-    setMatchDate(new Date().toISOString().slice(0, 10))
+    setMatchDate(getTodayDMY())
     setNotes('')
     setFrames(EMPTY_FRAMES)
     setError('')
@@ -122,21 +193,27 @@ export default function AddResult() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const matchDateISO = parseDMYToISO(matchDate)
+    if (!matchDateISO) {
+      setError('Datum mora biti u formatu dd/mm/yyyy.')
+      return
+    }
+
     for (const f of frames) {
       const max = GAME_FRAMES[f.game_type]
       if (f.home_score >= max && f.away_score >= max) {
-        setError(`Frame #${f.frame_order} (${f.label}): rezultat ne može biti ${max}:${max}.`)
+        setError(`Meč #${f.frame_order} (${f.label}): rezultat ne može biti ${max}:${max}.`)
         return
       }
       if (f.home_score < max && f.away_score < max) {
-        setError(`Frame #${f.frame_order} (${f.label}): jedan igrač mora doseći ${max} poena.`)
+        setError(`Meč #${f.frame_order} (${f.label}): jedan igrač mora doseći ${max} poena.`)
         return
       }
     }
     setSaving(true); setError('')
 
     const { data: matchData, error: matchError } = await supabase
-      .from('matches').insert({ home_team_id: homeTeamId, away_team_id: awayTeamId, match_date: matchDate, notes: notes || null })
+      .from('matches').insert({ home_team_id: homeTeamId, away_team_id: awayTeamId, match_date: matchDateISO, notes: notes || null })
       .select().single()
 
     if (matchError) { setError(matchError.message); setSaving(false); return }
@@ -171,6 +248,15 @@ export default function AddResult() {
   }).length
   const hasDraft = step === 2 || homeTeamId || awayTeamId || frames.some(f => f.home_score + f.away_score > 0)
 
+  const openDatePicker = () => {
+    if (!datePickerRef.current) return
+    if (typeof datePickerRef.current.showPicker === 'function') {
+      datePickerRef.current.showPicker()
+      return
+    }
+    datePickerRef.current.focus()
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
@@ -203,7 +289,7 @@ export default function AddResult() {
                   ) : s}
                 </div>
                 <span className={`text-xs font-medium hidden sm:block ${step === s ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
-                  {s === 1 ? 'Podaci utakmice' : 'Framovi'}
+                  {s === 1 ? 'Podaci utakmice' : 'Mečevi'}
                 </span>
                 {s < 2 && <div className="w-5 h-px bg-gray-200 dark:bg-white/10" />}
               </div>
@@ -226,7 +312,41 @@ export default function AddResult() {
         <form onSubmit={handleStep1} className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-6 flex flex-col gap-5 shadow-sm dark:shadow-none">
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Datum utakmice</label>
-            <input type="date" value={matchDate} onChange={e => setMatchDate(e.target.value)} required className={inputCls} style={{ width: 'auto' }} />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="dd/mm/yyyy"
+                value={matchDate}
+                onChange={e => setMatchDate(normalizeDMYInput(e.target.value))}
+                onBlur={e => {
+                  const iso = parseDMYToISO(normalizeDMYInput(e.target.value))
+                  if (iso) setMatchDate(formatISOToDMY(iso))
+                }}
+                required
+                className={inputCls}
+                style={{ width: 'auto' }}
+              />
+              <button
+                type="button"
+                onClick={openDatePicker}
+                className="h-10 w-10 rounded-xl border border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors flex items-center justify-center"
+                aria-label="Otvori kalendar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 9h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <input
+                ref={datePickerRef}
+                type="date"
+                value={parseDMYToISO(matchDate) || ''}
+                onChange={e => setMatchDate(formatISOToDMY(e.target.value))}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -249,7 +369,7 @@ export default function AddResult() {
             disabled={!homeTeamId || !awayTeamId}
             className="py-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-40 text-white dark:text-gray-900 font-semibold text-sm transition-all flex items-center justify-center gap-2"
           >
-            Sljedeće: Unesi framove
+            Sljedeće: Unesi mečeve
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
@@ -272,7 +392,7 @@ export default function AddResult() {
                 <span className="text-gray-300 dark:text-gray-700 mx-1">:</span>
                 <span className={awayPoints > homePoints ? 'text-emerald-600 dark:text-emerald-400' : ''}>{awayPoints}</span>
               </div>
-              <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest">{completedFrames}/6 framova</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest">{completedFrames}/6 mečeva</div>
             </div>
             <div className="min-w-0 text-right">
               <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest">Gost</div>

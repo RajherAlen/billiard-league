@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import MatchCard from '../components/MatchCard'
 
 export default function Matches() {
   const [matches, setMatches] = useState([])
+  const [teamName, setTeamName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [searchParams] = useSearchParams()
+  const teamId = searchParams.get('team')
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      let query = supabase
         .from('matches')
         .select(`
           id, match_date, notes, home_team_id, away_team_id,
@@ -17,17 +21,31 @@ export default function Matches() {
           frames(home_score, away_score)
         `)
         .order('match_date', { ascending: false })
+
+      if (teamId) query = query.or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+
+      const { data } = await query
+
+      if (teamId) {
+        const { data: team } = await supabase.from('teams').select('name').eq('id', teamId).single()
+        setTeamName(team?.name || '')
+      } else {
+        setTeamName('')
+      }
+
       setMatches(data || [])
       setLoading(false)
     }
     load()
-  }, [])
+  }, [teamId])
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-8">
-        <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">Svi rezultati</p>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Rezultati utakmica</h1>
+        <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">{teamId ? 'Ekipa' : 'Svi rezultati'}</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+          {teamId ? `Mečevi ekipe${teamName ? ` — ${teamName}` : ''}` : 'Rezultati utakmica'}
+        </h1>
       </div>
 
       {loading ? (

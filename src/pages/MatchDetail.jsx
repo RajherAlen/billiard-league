@@ -100,8 +100,8 @@ export default function MatchDetail() {
       </div>
 
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">Rezultati framova</h2>
-        <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{frames.length} framova</span>
+        <h2 className="text-base font-bold text-gray-900 dark:text-white">Rezultati mečeva</h2>
+        <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{frames.length} mečeva</span>
       </div>
 
       <div className="flex flex-col gap-2">
