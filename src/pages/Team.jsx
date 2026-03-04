@@ -9,6 +9,13 @@ function formatMatchCount(value) {
   return `${n} mečeva`
 }
 
+function formatFixtureCount(value) {
+  const n = Number(value) || 0
+  if (n === 1) return `${n} utakmica`
+  if (n >= 2 && n <= 4) return `${n} utakmice`
+  return `${n} utakmica`
+}
+
 function getMatchNoun(value) {
   const n = Number(value) || 0
   if (n === 1) return 'Meč'
@@ -16,16 +23,37 @@ function getMatchNoun(value) {
   return 'Mečeva'
 }
 
+function formatPointCount(value) {
+  const n = Number(value) || 0
+  if (n === 1) return `${n} bod`
+  if (n >= 2 && n <= 4) return `${n} boda`
+  return `${n} bodova`
+}
+
+function getWeekKey(dateValue) {
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) return null
+
+  const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayOfWeek = utcDate.getUTCDay() || 7
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayOfWeek)
+
+  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7)
+  return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+}
+
 export default function Team() {
   const { id: teamId } = useParams()
   const [team, setTeam] = useState(null)
   const [players, setPlayers] = useState([])
   const [matches, setMatches] = useState([])
+  const [standings, setStandings] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const [{ data: t }, { data: p }, { data: m }] = await Promise.all([
+      const [{ data: t }, { data: p }, { data: m }, { data: teams }, { data: allMatches }] = await Promise.all([
         supabase.from('teams').select('id, name').eq('id', teamId).single(),
         supabase.from('players').select('id, name, team_id').eq('team_id', teamId).order('name'),
         supabase
@@ -38,16 +66,51 @@ export default function Team() {
           `)
           .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
           .order('match_date', { ascending: false }),
+        supabase.from('teams').select('id, name'),
+        supabase
+          .from('matches')
+          .select('home_team_id, away_team_id, frames(home_score, away_score)'),
       ])
+
+      const pointsMap = {}
+      ;(teams || []).forEach(t => {
+        pointsMap[t.id] = 0
+      })
+
+      ;(allMatches || []).forEach(match => {
+        ;(match.frames || []).forEach(frame => {
+          pointsMap[match.home_team_id] = (pointsMap[match.home_team_id] || 0) + (frame.home_score || 0)
+          pointsMap[match.away_team_id] = (pointsMap[match.away_team_id] || 0) + (frame.away_score || 0)
+        })
+      })
+
+      const standingsRows = (teams || [])
+        .map(t => ({
+          team_id: t.id,
+          points: pointsMap[t.id] || 0,
+        }))
+        .sort((a, b) => b.points - a.points)
 
       setTeam(t || null)
       setPlayers(p || [])
       setMatches(m || [])
+      setStandings(standingsRows)
       setLoading(false)
     }
 
     load()
   }, [teamId])
+
+  const { teamRank, gapToFirst } = useMemo(() => {
+    const currentIndex = standings.findIndex(row => String(row.team_id) === String(teamId))
+    const leaderPoints = standings[0]?.points || 0
+    const currentPoints = currentIndex >= 0 ? (standings[currentIndex]?.points || 0) : 0
+
+    return {
+      teamRank: currentIndex >= 0 ? currentIndex + 1 : null,
+      gapToFirst: Math.max(0, leaderPoints - currentPoints),
+    }
+  }, [standings, teamId])
 
   const playerMap = useMemo(() => {
     const map = {}
@@ -58,7 +121,7 @@ export default function Team() {
         framesPlayed: 0,
         framesWon: 0,
         points: 0,
-        matchIds: new Set(),
+        weekKeys: new Set(),
       }
     })
     return map
@@ -72,6 +135,7 @@ export default function Team() {
     matches.forEach(match => {
       const isHomeTeam = match.home_team_id === teamId
       const opponentName = isHomeTeam ? match.away_team?.name : match.home_team?.name
+      const weekKey = getWeekKey(match.match_date) || `match-${match.id}`
       let myMatchScore = 0
       let oppMatchScore = 0
 
@@ -104,7 +168,7 @@ export default function Team() {
 
           stats.framesPlayed += 1
           stats.points += playerPoints
-          stats.matchIds.add(match.id)
+          stats.weekKeys.add(weekKey)
           if (playerWon) stats.framesWon += 1
         })
       })
@@ -121,7 +185,7 @@ export default function Team() {
     const topPlayersList = Object.values(playerMap)
       .map(player => ({
         ...player,
-        matchesPlayed: player.matchIds.size,
+        matchesPlayed: player.weekKeys.size,
         winPct: player.framesPlayed ? Math.round((player.framesWon / player.framesPlayed) * 100) : 0,
       }))
       .sort((a, b) => {
@@ -181,12 +245,16 @@ export default function Team() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {[
           { label: 'Igrača', value: players.length },
           { label: getMatchNoun(matches.length), value: matches.length },
           { label: 'Bodova', value: teamPoints },
-          { label: 'Primljeno', value: teamAgainst },
+          { label: 'Izgubljeno', value: teamAgainst },
+          {
+            label: teamRank === 1 ? 'Lider' : 'Zaostatak za 1.',
+            value: teamRank === 1 ? '-' : gapToFirst,
+          },
         ].map(stat => (
           <div key={stat.label} className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-xl px-4 py-3 text-center">
             <div className="text-2xl font-black tabular-nums text-gray-900 dark:text-white">{stat.value}</div>
@@ -194,6 +262,12 @@ export default function Team() {
           </div>
         ))}
       </div>
+
+      {teamRank && (
+        <p className="text-xs text-gray-400 dark:text-gray-600 mb-4">
+          Trenutno mjesto: {teamRank}. • Zaostatak za 1. mjestom: {formatPointCount(gapToFirst)}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         <div className="xl:col-span-5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl overflow-hidden">
@@ -209,7 +283,7 @@ export default function Team() {
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-white truncate">{idx + 1}. {player.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
-                    {formatMatchCount(player.matchesPlayed)} • {player.winPct}% učinak
+                    {formatFixtureCount(player.matchesPlayed)} • {formatMatchCount(player.framesPlayed)} • {player.winPct}% učinak
                   </p>
                 </div>
                 <div className="text-right shrink-0">

@@ -2,6 +2,23 @@ import { Link } from 'react-router-dom'
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
+function getGapLabel(standings, index) {
+  const row = standings[index]
+  if (!row) return null
+
+  if (index === 0) {
+    const secondPoints = standings[1]?.points
+    if (typeof secondPoints !== 'number') return null
+    const diff = row.points - secondPoints
+    return diff > 0 ? { text: `+${diff}`, cls: 'text-emerald-600 dark:text-emerald-400' } : null
+  }
+
+  const leaderPoints = standings[0]?.points
+  if (typeof leaderPoints !== 'number') return null
+  const diff = leaderPoints - row.points
+  return diff > 0 ? { text: `-${diff}`, cls: 'text-red-500 dark:text-red-400' } : null
+}
+
 export default function StandingsTable({ standings }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/8 shadow-sm dark:shadow-none bg-white dark:bg-[#111]">
@@ -15,7 +32,9 @@ export default function StandingsTable({ standings }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/4">
-          {standings.map((row, i) => (
+          {standings.map((row, i) => {
+            const gap = getGapLabel(standings, i)
+            return (
             <tr key={row.team_id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-white/3 ${i === 0 ? 'bg-amber-50/50 dark:bg-amber-400/5' : ''}`}>
               <td className="px-5 py-4 text-center">
                 {i < 3
@@ -38,9 +57,10 @@ export default function StandingsTable({ standings }) {
                 <span className={`text-lg font-bold tabular-nums ${i === 0 && row.points > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
                   {row.points}
                 </span>
+                {gap ? <span className={`ml-1 text-xs font-semibold tabular-nums ${gap.cls}`}>{gap.text}</span> : null}
               </td>
             </tr>
-          ))}
+          )})}
           {standings.length === 0 && (
             <tr>
               <td colSpan={4} className="px-4 py-16 text-center">
