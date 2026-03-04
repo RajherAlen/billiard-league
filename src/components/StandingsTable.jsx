@@ -35,7 +35,7 @@ export default function StandingsTable({ standings }) {
           {standings.map((row, i) => {
             const gap = getGapLabel(standings, i)
             return (
-            <tr key={row.team_id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-white/3 ${i === 0 ? 'bg-amber-50/50 dark:bg-amber-400/5' : ''}`}>
+            <tr key={row.team_id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-white/3 ${i === 0 ? 'bg-amber-50/50 dark:bg-amber-400/5' : ''} ${i === 5 ? 'border-b-2 border-blue-500 dark:border-blue-400' : ''}`}>
               <td className="px-5 py-4 text-center">
                 {i < 3
                   ? <span className="text-base">{MEDALS[i]}</span>

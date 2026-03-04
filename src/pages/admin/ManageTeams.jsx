@@ -196,19 +196,41 @@ export default function ManageTeams() {
   const [editName, setEditName] = useState('')
   const [viewingPlayer, setViewingPlayer] = useState(null)
 
-  const loadData = async () => {
+  const fetchData = async () => {
     const { data: t } = await supabase.from('teams').select('*').order('name')
     const { data: p } = await supabase.from('players').select('*').order('name')
-    setTeams(t || [])
-    setPlayers(p || [])
+    return { teamsData: t || [], playersData: p || [] }
+  }
+
+  const loadData = async () => {
+    const { teamsData, playersData } = await fetchData()
+    setTeams(teamsData)
+    setPlayers(playersData)
     setExpandedTeams(prev => {
-      const validTeamIds = new Set((t || []).map(team => team.id))
+      const validTeamIds = new Set(teamsData.map(team => team.id))
       return new Set([...prev].filter(id => validTeamIds.has(id)))
     })
     setLoading(false)
   }
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => {
+    let cancelled = false
+
+    fetchData().then(({ teamsData, playersData }) => {
+      if (cancelled) return
+      setTeams(teamsData)
+      setPlayers(playersData)
+      setExpandedTeams(prev => {
+        const validTeamIds = new Set(teamsData.map(team => team.id))
+        return new Set([...prev].filter(id => validTeamIds.has(id)))
+      })
+      setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const toggleTeam = (id) => {
     setExpandedTeams(prev => {
