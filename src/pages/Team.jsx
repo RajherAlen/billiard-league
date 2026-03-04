@@ -336,7 +336,7 @@ export default function Team() {
               >
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-white truncate">
-                    Meč protiv {match.opponentName || 'nepoznate ekipe'}
+                    {team.name} protiv {match.opponentName || 'nepoznate ekipe'}
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5 truncate">
                     {new Date(match.matchDate).toLocaleDateString('hr-HR')}
