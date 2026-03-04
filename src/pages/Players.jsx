@@ -3,14 +3,17 @@ import { supabase } from '../lib/supabase'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { ArrowDown, ArrowUp, ArrowUpDown, RotateCcw } from 'lucide-react'
 
+const GAME_FRAMES = { '8ball': 5, '9ball': 6, '10ball': 5 }
+
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
+  const possiblePoints = d.possiblePoints || 0
   return (
     <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs shadow-sm dark:shadow-none">
       <p className="text-gray-500 dark:text-gray-400 mb-1 font-medium">{label}</p>
       <p className="font-bold text-emerald-600 dark:text-emerald-400">{d.points} bodova</p>
-      <p className="text-gray-400 dark:text-gray-500 mt-0.5">primljeno {d.against}</p>
+      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{d.points} od {possiblePoints}</p>
     </div>
   )
 }
@@ -117,15 +120,21 @@ export default function Players() {
           stats.pointsAgainst += oppPoints
           stats.matchIds.add(frame.match_id)
 
-          if (!stats.matchMap[frame.match_id]) {
-            stats.matchMap[frame.match_id] = {
+          const dateKey = String(match.match_date || '').slice(0, 10)
+          const fallbackPossible = Math.max(myPoints, oppPoints)
+          const framePossible = GAME_FRAMES[frame.game_type] || fallbackPossible
+
+          if (!stats.matchMap[dateKey]) {
+            stats.matchMap[dateKey] = {
               date: match.match_date,
               points: 0,
               against: 0,
+              possiblePoints: 0,
             }
           }
-          stats.matchMap[frame.match_id].points += myPoints
-          stats.matchMap[frame.match_id].against += oppPoints
+          stats.matchMap[dateKey].points += myPoints
+          stats.matchMap[dateKey].against += oppPoints
+          stats.matchMap[dateKey].possiblePoints += framePossible
 
           if (frame.winning_team_id && frame.winning_team_id === myTeamId) stats.framesWon += 1
         })
