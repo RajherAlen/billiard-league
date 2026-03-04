@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 
 export default function MatchCard({ match }) {
-  const homeFrames = match.frames?.filter(f => f.winning_team_id === match.home_team_id).length ?? 0
-  const awayFrames = match.frames?.filter(f => f.winning_team_id === match.away_team_id).length ?? 0
-  const homeWins = homeFrames > awayFrames
-  const awayWins = awayFrames > homeFrames
+  const homePoints = match.frames?.reduce((s, f) => s + (f.home_score || 0), 0) ?? 0
+  const awayPoints = match.frames?.reduce((s, f) => s + (f.away_score || 0), 0) ?? 0
+  const homeWins = homePoints > awayPoints
+  const awayWins = awayPoints > homePoints
 
   return (
     <Link to={`/matches/${match.id}`} className="block group">
@@ -31,9 +31,9 @@ export default function MatchCard({ match }) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 px-4 py-2 rounded-xl bg-gray-50 dark:bg-white/5">
-            <span className={`text-2xl sm:text-3xl font-black tabular-nums ${homeWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{homeFrames}</span>
+            <span className={`text-2xl sm:text-3xl font-black tabular-nums ${homeWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{homePoints}</span>
             <span className="text-gray-300 dark:text-gray-700">:</span>
-            <span className={`text-2xl sm:text-3xl font-black tabular-nums ${awayWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{awayFrames}</span>
+            <span className={`text-2xl sm:text-3xl font-black tabular-nums ${awayWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{awayPoints}</span>
           </div>
 
           <div className="flex-1 min-w-0 text-right">

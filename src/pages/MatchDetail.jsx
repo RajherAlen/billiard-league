@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const GAME_LABELS = { '8ball': '8-Ball', '9ball': '9-Ball', '10ball': '10-Ball' }
+const GAME_FRAMES = { '8ball': 5, '9ball': 6, '10ball': 5 }
 const GAME_COLORS = {
   '8ball':  'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300',
   '9ball':  'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300',
@@ -26,7 +27,7 @@ export default function MatchDetail() {
 
       const { data: f } = await supabase
         .from('frames')
-        .select(`id, frame_order, game_type, is_doubles, winning_team_id,
+        .select(`id, frame_order, game_type, is_doubles, home_score, away_score,
           home_player1:players!frames_home_player1_id_fkey(id, name),
           home_player2:players!frames_home_player2_id_fkey(id, name),
           away_player1:players!frames_away_player1_id_fkey(id, name),
@@ -49,10 +50,10 @@ export default function MatchDetail() {
   )
   if (!match) return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-gray-500">Utakmica nije pronađena.</div>
 
-  const homeFrames = frames.filter(f => f.winning_team_id === match.home_team_id).length
-  const awayFrames = frames.filter(f => f.winning_team_id === match.away_team_id).length
-  const homeWins = homeFrames > awayFrames
-  const awayWins = awayFrames > homeFrames
+  const homePoints = frames.reduce((s, f) => s + (f.home_score || 0), 0)
+  const awayPoints = frames.reduce((s, f) => s + (f.away_score || 0), 0)
+  const homeWins = homePoints > awayPoints
+  const awayWins = awayPoints > homePoints
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
@@ -77,11 +78,11 @@ export default function MatchDetail() {
           </div>
           <div className="shrink-0 text-center bg-gray-50 dark:bg-white/5 px-5 py-3 rounded-2xl">
             <div className="flex items-center gap-2">
-              <span className={`text-4xl sm:text-5xl font-black tabular-nums ${homeWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{homeFrames}</span>
+              <span className={`text-4xl sm:text-5xl font-black tabular-nums ${homeWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{homePoints}</span>
               <span className="text-gray-300 dark:text-gray-700 text-xl">:</span>
-              <span className={`text-4xl sm:text-5xl font-black tabular-nums ${awayWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{awayFrames}</span>
+              <span className={`text-4xl sm:text-5xl font-black tabular-nums ${awayWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{awayPoints}</span>
             </div>
-            <div className="text-gray-400 dark:text-gray-600 text-xs mt-1 uppercase tracking-widest">framovi</div>
+            <div className="text-gray-400 dark:text-gray-600 text-xs mt-1 uppercase tracking-widest">bodovi</div>
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">Gost</div>
@@ -105,8 +106,9 @@ export default function MatchDetail() {
 
       <div className="flex flex-col gap-2">
         {frames.map(frame => {
-          const homeWon = frame.winning_team_id === match.home_team_id
-          const winnerName = homeWon ? match.home_team?.name : match.away_team?.name
+          const homeWon = frame.home_score > frame.away_score
+          const awayWon = frame.away_score > frame.home_score
+          const max = GAME_FRAMES[frame.game_type]
           return (
             <div key={frame.id} className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -119,14 +121,21 @@ export default function MatchDetail() {
                     {frame.is_doubles ? 'Dubl' : 'Singl'}
                   </span>
                 </div>
-                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 px-2.5 py-1 rounded-full">
-                  🏆 {winnerName}
-                </span>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 rounded-lg px-3 py-1">
+                  <span className={`text-lg font-black tabular-nums ${homeWon ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>
+                    {frame.home_score}
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-700 text-sm">:</span>
+                  <span className={`text-lg font-black tabular-nums ${awayWon ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>
+                    {frame.away_score}
+                  </span>
+                  <span className="text-gray-400 dark:text-gray-600 text-xs ml-1">/{max}</span>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {[
                   { team: match.home_team, p1: frame.home_player1, p2: frame.home_player2, won: homeWon },
-                  { team: match.away_team, p1: frame.away_player1, p2: frame.away_player2, won: !homeWon },
+                  { team: match.away_team, p1: frame.away_player1, p2: frame.away_player2, won: awayWon },
                 ].map(({ team, p1, p2, won }) => (
                   <div key={team?.id} className={`rounded-lg px-3 py-2 ${won ? 'bg-amber-50 dark:bg-amber-400/8 border border-amber-200 dark:border-amber-400/20' : 'bg-gray-50 dark:bg-white/3 border border-gray-100 dark:border-white/5'}`}>
                     <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">{team?.name}</div>

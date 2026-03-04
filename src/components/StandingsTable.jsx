@@ -9,7 +9,7 @@ export default function StandingsTable({ standings }) {
             <th className="px-5 py-3.5 text-left w-14 text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">#</th>
             <th className="px-4 py-3.5 text-left text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Ekipa</th>
             <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell">OU</th>
-            <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Framovi</th>
+            <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Bodovi</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/4">
@@ -25,7 +25,7 @@ export default function StandingsTable({ standings }) {
                 <span className={`font-semibold ${i === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
                   {row.team_name}
                 </span>
-                {i === 0 && standings[0].frames_won > 0 && (
+                {i === 0 && row.points > 0 && (
                   <span className="ml-2 text-[10px] font-bold bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                     Lider
                   </span>
@@ -33,8 +33,8 @@ export default function StandingsTable({ standings }) {
               </td>
               <td className="px-4 py-4 text-center text-gray-500 dark:text-gray-400 hidden sm:table-cell">{row.matches}</td>
               <td className="px-5 py-4 text-center">
-                <span className={`text-lg font-bold tabular-nums ${i === 0 && row.frames_won > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
-                  {row.frames_won}
+                <span className={`text-lg font-bold tabular-nums ${i === 0 && row.points > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                  {row.points}
                 </span>
               </td>
             </tr>

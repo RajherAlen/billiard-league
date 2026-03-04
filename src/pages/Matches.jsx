@@ -14,7 +14,7 @@ export default function Matches() {
           id, match_date, notes, home_team_id, away_team_id,
           home_team:teams!matches_home_team_id_fkey(id, name),
           away_team:teams!matches_away_team_id_fkey(id, name),
-          frames(winning_team_id)
+          frames(home_score, away_score)
         `)
         .order('match_date', { ascending: false })
       setMatches(data || [])
