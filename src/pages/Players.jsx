@@ -89,6 +89,7 @@ export default function Players() {
           framesWon: 0,
           points: 0,
           pointsAgainst: 0,
+          totalPossiblePoints: 0,
           matchIds: new Set(),
           matchMap: {},
         }
@@ -114,15 +115,16 @@ export default function Players() {
           const myPoints = side === 'home' ? (frame.home_score || 0) : (frame.away_score || 0)
           const oppPoints = side === 'home' ? (frame.away_score || 0) : (frame.home_score || 0)
           const myTeamId = side === 'home' ? match.home_team_id : match.away_team_id
+          const fallbackPossible = Math.max(myPoints, oppPoints)
+          const framePossible = GAME_FRAMES[frame.game_type] || fallbackPossible
 
           stats.framesPlayed += 1
           stats.points += myPoints
           stats.pointsAgainst += oppPoints
+          stats.totalPossiblePoints += framePossible
           stats.matchIds.add(frame.match_id)
 
           const dateKey = String(match.match_date || '').slice(0, 10)
-          const fallbackPossible = Math.max(myPoints, oppPoints)
-          const framePossible = GAME_FRAMES[frame.game_type] || fallbackPossible
 
           if (!stats.matchMap[dateKey]) {
             stats.matchMap[dateKey] = {
@@ -286,6 +288,7 @@ export default function Players() {
                       <td className="px-4 py-4 text-center text-gray-600 dark:text-gray-300 tabular-nums hidden sm:table-cell">{r.frameWinPct}%</td>
                       <td className="px-5 py-4 text-center">
                         <span className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{r.points}</span>
+                        <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">/{r.totalPossiblePoints}</span>
                       </td>
                       <td className="px-5 py-4 text-center tabular-nums hidden lg:table-cell">
                         <span className={r.diff >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
@@ -326,7 +329,15 @@ export default function Players() {
                     { label: 'Utakmice', value: selectedPlayer.matchesPlayed },
                     { label: 'Mečevi', value: selectedPlayer.framesPlayed },
                     { label: 'Pobjede', value: selectedPlayer.framesWon },
-                    { label: 'Bodovi', value: selectedPlayer.points },
+                    {
+                      label: 'Bodovi',
+                      value: (
+                        <>
+                          <span>{selectedPlayer.points}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">/{selectedPlayer.totalPossiblePoints}</span>
+                        </>
+                      ),
+                    },
                   ].map(kpi => (
                     <div key={kpi.label} className="bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center">
                       <div className="text-xl font-black text-gray-900 dark:text-white tabular-nums">{kpi.value}</div>
@@ -411,7 +422,15 @@ export default function Players() {
                     { label: 'Utakmice', value: selectedPlayer.matchesPlayed },
                     { label: 'Mečevi', value: selectedPlayer.framesPlayed },
                     { label: 'Pobjede', value: selectedPlayer.framesWon },
-                    { label: 'Bodovi', value: selectedPlayer.points },
+                    {
+                      label: 'Bodovi',
+                      value: (
+                        <>
+                          <span>{selectedPlayer.points}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">/{selectedPlayer.totalPossiblePoints}</span>
+                        </>
+                      ),
+                    },
                   ].map(kpi => (
                     <div key={kpi.label} className="bg-gray-50 dark:bg-white/4 rounded-xl px-3.5 py-3 text-center">
                       <div className="text-xl font-black text-gray-900 dark:text-white tabular-nums">{kpi.value}</div>
