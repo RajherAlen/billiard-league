@@ -30,6 +30,15 @@ function formatPointCount(value) {
   return `${n} bodova`
 }
 
+function formatPointsOutOfTotal(scored, conceded) {
+  const myPoints = Number(scored) || 0
+  const oppPoints = Number(conceded) || 0
+  return {
+    scored: myPoints,
+    total: myPoints + oppPoints,
+  }
+}
+
 function getWeekKey(dateValue) {
   const date = new Date(dateValue)
   if (Number.isNaN(date.getTime())) return null
@@ -249,7 +258,18 @@ export default function Team() {
         {[
           { label: 'Igrača', value: players.length },
           { label: getMatchNoun(matches.length), value: matches.length },
-          { label: 'Bodova', value: teamPoints },
+          {
+            label: 'Bodova',
+            value: (() => {
+              const points = formatPointsOutOfTotal(teamPoints, teamAgainst)
+              return (
+                <>
+                  <span>{points.scored}</span>
+                  <span className="text-sm sm:text-base text-gray-500 dark:text-gray-400">/{points.total}</span>
+                </>
+              )
+            })(),
+          },
           { label: 'Izgubljeno', value: teamAgainst },
           {
             label: teamRank === 1 ? 'Lider' : 'Zaostatak za 1.',
