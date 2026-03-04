@@ -7,9 +7,9 @@ export default function StandingsTable({ standings }) {
         <thead>
           <tr className="border-b border-gray-100 dark:border-white/8">
             <th className="px-5 py-3.5 text-left w-14 text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">#</th>
-            <th className="px-4 py-3.5 text-left text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Team</th>
-            <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell">MP</th>
-            <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Frames</th>
+            <th className="px-4 py-3.5 text-left text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Ekipa</th>
+            <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell">OU</th>
+            <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Framovi</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/4">
@@ -27,7 +27,7 @@ export default function StandingsTable({ standings }) {
                 </span>
                 {i === 0 && standings[0].frames_won > 0 && (
                   <span className="ml-2 text-[10px] font-bold bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
-                    Leader
+                    Lider
                   </span>
                 )}
               </td>
@@ -43,8 +43,8 @@ export default function StandingsTable({ standings }) {
             <tr>
               <td colSpan={4} className="px-4 py-16 text-center">
                 <div className="text-4xl mb-3">🎱</div>
-                <div className="text-base font-medium text-gray-500 dark:text-gray-400">Season hasn't started yet</div>
-                <div className="text-sm text-gray-400 dark:text-gray-600 mt-1">Results will appear here once matches are played</div>
+                <div className="text-base font-medium text-gray-500 dark:text-gray-400">Sezona još nije počela</div>
+                <div className="text-sm text-gray-400 dark:text-gray-600 mt-1">Rezultati će se pojaviti ovdje nakon odigranih utakmica</div>
               </td>
             </tr>
           )}

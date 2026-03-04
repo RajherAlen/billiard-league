@@ -18,7 +18,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     const { error } = await signIn(email, password)
-    if (error) setError('Invalid email or password')
+    if (error) setError('Pogrešan email ili lozinka')
     else navigate('/admin')
     setLoading(false)
   }
@@ -28,8 +28,8 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎱</div>
-          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Admin Access</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Sign in to manage the league</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Admin pristup</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Prijavite se za upravljanje ligom</p>
         </div>
 
         <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-none">
@@ -42,12 +42,12 @@ export default function Login() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="your@email.com"
+                placeholder="vas@email.com"
                 className="w-full rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border border-gray-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
             <div>
-              <label className="block text-gray-700 dark:text-gray-300 text-xs font-semibold uppercase tracking-widest mb-1.5">Password</label>
+              <label className="block text-gray-700 dark:text-gray-300 text-xs font-semibold uppercase tracking-widest mb-1.5">Lozinka</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -98,9 +98,9 @@ export default function Login() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                   </svg>
-                  Signing in...
+                  Prijava...
                 </span>
-              ) : 'Sign In'}
+              ) : 'Prijavi se'}
             </button>
           </form>
         </div>

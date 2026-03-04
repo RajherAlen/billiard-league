@@ -9,17 +9,6 @@ const GAME_COLORS = {
   '10ball': 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300',
 }
 
-function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-20 text-gray-400 dark:text-gray-600">
-      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-      </svg>
-    </div>
-  )
-}
-
 export default function MatchDetail() {
   const { id } = useParams()
   const [match, setMatch] = useState(null)
@@ -50,8 +39,15 @@ export default function MatchDetail() {
     load()
   }, [id])
 
-  if (loading) return <Spinner />
-  if (!match) return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-gray-500">Match not found.</div>
+  if (loading) return (
+    <div className="flex items-center justify-center py-20 text-gray-400 dark:text-gray-600">
+      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+    </div>
+  )
+  if (!match) return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-gray-500">Utakmica nije pronađena.</div>
 
   const homeFrames = frames.filter(f => f.winning_team_id === match.home_team_id).length
   const awayFrames = frames.filter(f => f.winning_team_id === match.away_team_id).length
@@ -64,21 +60,20 @@ export default function MatchDetail() {
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Matches
+        Natrag na utakmice
       </Link>
 
-      {/* Score hero */}
       <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-6 sm:p-8 mb-6 shadow-sm dark:shadow-none">
         <div className="text-center text-gray-400 dark:text-gray-500 text-sm mb-6">
-          {new Date(match.match_date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {new Date(match.match_date).toLocaleDateString('hr-HR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex-1 text-right min-w-0">
-            <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">Home</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">Domaćin</div>
             <div className={`font-extrabold text-xl sm:text-2xl truncate ${homeWins ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
               {match.home_team?.name}
             </div>
-            {homeWins && <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-1">Winner</div>}
+            {homeWins && <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-1">Pobjednik</div>}
           </div>
           <div className="shrink-0 text-center bg-gray-50 dark:bg-white/5 px-5 py-3 rounded-2xl">
             <div className="flex items-center gap-2">
@@ -86,14 +81,14 @@ export default function MatchDetail() {
               <span className="text-gray-300 dark:text-gray-700 text-xl">:</span>
               <span className={`text-4xl sm:text-5xl font-black tabular-nums ${awayWins ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}`}>{awayFrames}</span>
             </div>
-            <div className="text-gray-400 dark:text-gray-600 text-xs mt-1 uppercase tracking-widest">frames</div>
+            <div className="text-gray-400 dark:text-gray-600 text-xs mt-1 uppercase tracking-widest">framovi</div>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">Away</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-600 font-semibold uppercase tracking-widest mb-1">Gost</div>
             <div className={`font-extrabold text-xl sm:text-2xl truncate ${awayWins ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
               {match.away_team?.name}
             </div>
-            {awayWins && <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-1">Winner</div>}
+            {awayWins && <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-1">Pobjednik</div>}
           </div>
         </div>
         {match.notes && (
@@ -103,10 +98,9 @@ export default function MatchDetail() {
         )}
       </div>
 
-      {/* Frames */}
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">Frame Results</h2>
-        <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{frames.length} frames</span>
+        <h2 className="text-base font-bold text-gray-900 dark:text-white">Rezultati framova</h2>
+        <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{frames.length} framova</span>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -122,7 +116,7 @@ export default function MatchDetail() {
                     {GAME_LABELS[frame.game_type]}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
-                    {frame.is_doubles ? 'Doubles' : 'Singles'}
+                    {frame.is_doubles ? 'Dubl' : 'Singl'}
                   </span>
                 </div>
                 <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 px-2.5 py-1 rounded-full">

@@ -26,7 +26,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      aria-label="Toggle theme"
+      aria-label="Promijeni temu"
       className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
     >
       {dark ? (
@@ -56,17 +56,14 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/95 dark:bg-black/90 border-b border-gray-200 dark:border-white/8 backdrop-blur-sm shadow-sm dark:shadow-none">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-base tracking-tight shrink-0">
             <span className="text-xl leading-none">🎱</span>
-            <span>Billiard <span className="text-emerald-600 dark:text-emerald-400">League</span></span>
+            <span>Bilijar <span className="text-emerald-600 dark:text-emerald-400">Liga</span></span>
           </Link>
 
-          {/* Desktop */}
           <div className="hidden sm:flex items-center gap-1">
-            <NavLink to="/">Standings</NavLink>
-            <NavLink to="/matches">Matches</NavLink>
+            <NavLink to="/">Ljestvica</NavLink>
+            <NavLink to="/matches">Utakmice</NavLink>
             {session && <NavLink to="/admin">Admin</NavLink>}
             <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-1" />
             <ThemeToggle />
@@ -75,7 +72,7 @@ export default function Navbar() {
                 onClick={handleSignOut}
                 className="ml-1 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium"
               >
-                Sign out
+                Odjava
               </button>
             ) : (
               <Link
@@ -87,13 +84,12 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile controls */}
           <div className="sm:hidden flex items-center gap-1">
             <ThemeToggle />
             <button
               className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
               onClick={() => setMenuOpen(v => !v)}
-              aria-label="Toggle menu"
+              aria-label="Izbornik"
             >
               {menuOpen ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -108,21 +104,20 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {menuOpen && (
           <div className="sm:hidden border-t border-gray-100 dark:border-white/5 py-3 flex flex-col gap-1 pb-4">
-            <NavLink to="/">Standings</NavLink>
-            <NavLink to="/matches">Matches</NavLink>
+            <NavLink to="/">Ljestvica</NavLink>
+            <NavLink to="/matches">Utakmice</NavLink>
             {session ? (
               <>
-                <NavLink to="/admin">Admin Dashboard</NavLink>
-                <NavLink to="/admin/result/new">Add Match Result</NavLink>
-                <NavLink to="/admin/teams">Manage Teams</NavLink>
+                <NavLink to="/admin">Admin nadzorna ploča</NavLink>
+                <NavLink to="/admin/result/new">Dodaj rezultat</NavLink>
+                <NavLink to="/admin/teams">Upravljaj ekipama</NavLink>
                 <button
                   onClick={handleSignOut}
                   className="mt-1 px-3 py-2 text-sm text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium"
                 >
-                  Sign out
+                  Odjava
                 </button>
               </>
             ) : (
@@ -130,7 +125,7 @@ export default function Navbar() {
                 to="/login"
                 className="mt-1 px-3 py-2 text-sm bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-semibold text-center"
               >
-                Admin Login
+                Admin prijava
               </Link>
             )}
           </div>

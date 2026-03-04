@@ -4,7 +4,7 @@ export default function CustomSelect({
   value,
   onChange,
   options = [],
-  placeholder = 'Select...',
+  placeholder = 'Odaberi...',
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -49,7 +49,7 @@ export default function CustomSelect({
           max-h-60 overflow-y-auto"
         >
           {options.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 italic">No options available</div>
+            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 italic">Nema dostupnih opcija</div>
           ) : (
             options.map(option => (
               <button

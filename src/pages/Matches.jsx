@@ -26,8 +26,8 @@ export default function Matches() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-8">
-        <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">All Results</p>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Match Results</h1>
+        <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">Svi rezultati</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Rezultati utakmica</h1>
       </div>
 
       {loading ? (
@@ -40,8 +40,8 @@ export default function Matches() {
       ) : matches.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">🎱</div>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">No matches played yet</p>
-          <p className="text-gray-400 dark:text-gray-600 text-sm mt-1">Check back once the season kicks off</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Još nema odigranih utakmica</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm mt-1">Provjerite kada sezona počne</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

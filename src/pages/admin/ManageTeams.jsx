@@ -48,7 +48,7 @@ export default function ManageTeams() {
   }
 
   const deleteTeam = async (id) => {
-    if (!confirm('Delete this team and all their players?')) return
+    if (!confirm('Izbrisati ovu ekipu i sve njene igrače?')) return
     await supabase.from('teams').delete().eq('id', id)
     await loadData()
   }
@@ -68,7 +68,7 @@ export default function ManageTeams() {
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-8">
         <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">Admin</p>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Teams & Players</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Ekipe i igrači</h1>
       </div>
 
       {error && (
@@ -80,14 +80,14 @@ export default function ManageTeams() {
         </div>
       )}
 
-      {/* Add Team */}
+      {/* Dodaj ekipu */}
       <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Add Team</h2>
+        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Dodaj ekipu</h2>
         <form onSubmit={addTeam} className="flex gap-2">
           <input
             value={newTeam}
             onChange={e => setNewTeam(e.target.value)}
-            placeholder="e.g. The Breakers"
+            placeholder="npr. The Breakers"
             className="flex-1 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border border-gray-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
           />
           <button
@@ -95,30 +95,30 @@ export default function ManageTeams() {
             disabled={saving || !newTeam.trim()}
             className="shrink-0 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-40 text-white dark:text-gray-900 font-semibold text-sm transition-all"
           >
-            Add
+            Dodaj
           </button>
         </form>
       </div>
 
-      {/* Add Player */}
+      {/* Dodaj igrača */}
       <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-5 mb-8 shadow-sm dark:shadow-none">
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Add Player</h2>
+        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Dodaj igrača</h2>
         <form onSubmit={addPlayer} className="flex flex-col sm:flex-row gap-3">
           <div className="sm:w-52 shrink-0">
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Team</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Ekipa</label>
             <CustomSelect
               value={selectedTeam}
               onChange={setSelectedTeam}
               options={teamOptions}
-              placeholder="Select a team"
+              placeholder="Odaberi ekipu"
             />
           </div>
           <div className="flex-1 min-w-0">
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Player Name</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Ime igrača</label>
             <input
               value={newPlayer}
               onChange={e => setNewPlayer(e.target.value)}
-              placeholder="Full name"
+              placeholder="Puno ime"
               className="w-full rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border border-gray-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
             />
           </div>
@@ -128,18 +128,18 @@ export default function ManageTeams() {
               disabled={saving || !newPlayer.trim() || !selectedTeam}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-40 text-white dark:text-gray-900 font-semibold text-sm transition-all"
             >
-              Add
+              Dodaj
             </button>
           </div>
         </form>
       </div>
 
-      {/* Teams list */}
+      {/* Popis ekipa */}
       {teams.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-4xl mb-3">👥</div>
-          <p className="font-medium text-gray-500 dark:text-gray-400">No teams yet</p>
-          <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Add your first team above</p>
+          <p className="font-medium text-gray-500 dark:text-gray-400">Još nema ekipa</p>
+          <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Dodaj prvu ekipu gore</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -151,18 +151,18 @@ export default function ManageTeams() {
                   <div className="flex items-center gap-2.5">
                     <span className="font-bold text-gray-900 dark:text-white">{team.name}</span>
                     <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
-                      {teamPlayers.length} player{teamPlayers.length !== 1 ? 's' : ''}
+                      {teamPlayers.length} {teamPlayers.length === 1 ? 'igrač' : 'igrača'}
                     </span>
                   </div>
                   <button
                     onClick={() => deleteTeam(team.id)}
                     className="text-xs text-red-500 dark:text-red-500/70 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors"
                   >
-                    Delete
+                    Izbriši
                   </button>
                 </div>
                 {teamPlayers.length === 0 ? (
-                  <div className="px-5 py-4 text-sm text-gray-400 dark:text-gray-600 italic">No players added yet</div>
+                  <div className="px-5 py-4 text-sm text-gray-400 dark:text-gray-600 italic">Još nema igrača</div>
                 ) : (
                   <ul className="divide-y divide-gray-50 dark:divide-white/4">
                     {teamPlayers.map(p => (
@@ -171,7 +171,7 @@ export default function ManageTeams() {
                         <button
                           onClick={() => deletePlayer(p.id)}
                           className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all p-1 rounded-lg"
-                          title="Remove player"
+                          title="Ukloni igrača"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
