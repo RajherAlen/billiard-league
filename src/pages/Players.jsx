@@ -146,6 +146,7 @@ export default function Players() {
         .map(p => {
           const matchesPlayed = p.matchIds.size
           const frameWinPct = p.framesPlayed ? Math.round((p.framesWon / p.framesPlayed) * 100) : 0
+          const pointsPct = p.totalPossiblePoints ? Math.round((p.points / p.totalPossiblePoints) * 100) : 0
           const trendData = Object.values(p.matchMap)
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .map(m => ({
@@ -157,6 +158,7 @@ export default function Players() {
             ...p,
             matchesPlayed,
             frameWinPct,
+            pointsPct,
             diff: p.points - p.pointsAgainst,
             trendData,
           }
@@ -264,13 +266,10 @@ export default function Players() {
                       <SortHeader label="Pob" hint="Pobjede u mečevima" sortKey="framesWon" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell">
-                      <SortHeader label="%" hint="Učinak u mečevima" sortKey="frameWinPct" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+                      <SortHeader label="Učinak" hint="% pobjeđenih mečeva / % bodova od mogućih" sortKey="frameWinPct" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                     <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">
                       <SortHeader label="Bodovi" sortKey="points" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="px-5 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden lg:table-cell">
-                      <SortHeader label="Razlika" sortKey="diff" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
                     </th>
                   </tr>
                 </thead>
@@ -288,15 +287,13 @@ export default function Players() {
                       <td className="px-4 py-4 text-center text-gray-600 dark:text-gray-300 tabular-nums">{r.matchesPlayed}</td>
                       <td className="px-4 py-4 text-center text-gray-600 dark:text-gray-300 tabular-nums">{r.framesPlayed}</td>
                       <td className="px-4 py-4 text-center text-gray-600 dark:text-gray-300 tabular-nums">{r.framesWon}</td>
-                      <td className="px-4 py-4 text-center text-gray-600 dark:text-gray-300 tabular-nums hidden sm:table-cell">{r.frameWinPct}%</td>
+                      <td className="px-4 py-4 text-center tabular-nums hidden sm:table-cell">
+                        <div className="text-gray-900 dark:text-white font-semibold">{r.frameWinPct}%</div>
+                        <div className="text-[11px] text-gray-400 dark:text-gray-600">{r.pointsPct}%</div>
+                      </td>
                       <td className="px-5 py-4 text-center">
                         <span className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{r.points}</span>
                         <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">/{r.totalPossiblePoints}</span>
-                      </td>
-                      <td className="px-5 py-4 text-center tabular-nums hidden lg:table-cell">
-                        <span className={r.diff >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
-                          {r.diff > 0 ? `+${r.diff}` : r.diff}
-                        </span>
                       </td>
                     </tr>
                   ))}

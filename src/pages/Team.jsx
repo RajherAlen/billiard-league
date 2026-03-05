@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const GAME_FRAMES = { '8ball': 5, '9ball': 6, '10ball': 5 }
+
 function formatMatchCount(value) {
   const n = Number(value) || 0
   if (n === 1) return `${n} meč`
@@ -130,6 +132,7 @@ export default function Team() {
         framesPlayed: 0,
         framesWon: 0,
         points: 0,
+        totalPossiblePoints: 0,
         weekKeys: new Set(),
       }
     })
@@ -171,12 +174,15 @@ export default function Team() {
 
           const stats = playerMap[id]
           const playerPoints = side === 'home' ? (frame.home_score || 0) : (frame.away_score || 0)
+          const oppPoints = side === 'home' ? (frame.away_score || 0) : (frame.home_score || 0)
           const playerWon = side === 'home'
             ? (frame.home_score || 0) > (frame.away_score || 0)
             : (frame.away_score || 0) > (frame.home_score || 0)
+          const framePossible = GAME_FRAMES[frame.game_type] || Math.max(playerPoints, oppPoints)
 
           stats.framesPlayed += 1
           stats.points += playerPoints
+          stats.totalPossiblePoints += framePossible
           stats.weekKeys.add(weekKey)
           if (playerWon) stats.framesWon += 1
         })
@@ -196,6 +202,7 @@ export default function Team() {
         ...player,
         matchesPlayed: player.weekKeys.size,
         winPct: player.framesPlayed ? Math.round((player.framesWon / player.framesPlayed) * 100) : 0,
+        pointsPct: player.totalPossiblePoints ? Math.round((player.points / player.totalPossiblePoints) * 100) : 0,
       }))
       .sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points
@@ -303,12 +310,15 @@ export default function Team() {
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-white truncate">{idx + 1}. {player.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
-                    {formatFixtureCount(player.matchesPlayed)} • {formatMatchCount(player.framesPlayed)} • {player.winPct}% učinak
+                    {formatFixtureCount(player.matchesPlayed)} • {formatMatchCount(player.framesPlayed)} • {player.winPct}% mečeva • {player.pointsPct}% bodova
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{player.points}</div>
-                  <div className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600">bod</div>
+                  <div className="text-lg font-bold tabular-nums text-gray-900 dark:text-white">
+                    {player.points}
+                    <span className="text-sm font-normal text-gray-400 dark:text-gray-600">/{player.totalPossiblePoints}</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600">bodova</div>
                 </div>
               </div>
             ))}
