@@ -2,8 +2,257 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import CustomSelect from '../components/CustomSelect'
 
-function UpcomingCard({ match }) {
+const FRAME_TEMPLATE = [
+  { frame_order: 1, game_type: '8ball',  is_doubles: false },
+  { frame_order: 2, game_type: '9ball',  is_doubles: false },
+  { frame_order: 3, game_type: '9ball',  is_doubles: true  },
+  { frame_order: 4, game_type: '10ball', is_doubles: true  },
+  { frame_order: 5, game_type: '9ball',  is_doubles: false },
+  { frame_order: 6, game_type: '10ball', is_doubles: false },
+]
+
+const GAME_LABEL = { '8ball': '8-Ball', '9ball': '9-Ball', '10ball': '10-Ball' }
+const GAME_COLOR = {
+  '8ball':  'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300',
+  '9ball':  'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300',
+  '10ball': 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300',
+}
+
+
+function FrameLineupSection({ match, players, session }) {
+  const [frameLineups, setFrameLineups] = useState(null) // null = loading
+  const [localFrames, setLocalFrames] = useState([])
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  const homePlayers = players.filter(p => p.team_id === match.home_team?.id)
+  const awayPlayers = players.filter(p => p.team_id === match.away_team?.id)
+
+  useEffect(() => {
+    supabase
+      .from('match_frame_lineups')
+      .select('*')
+      .eq('match_id', match.id)
+      .order('frame_order')
+      .then(({ data }) => {
+        const rows = data || []
+        const merged = FRAME_TEMPLATE.map(t => {
+          const row = rows.find(r => r.frame_order === t.frame_order)
+          return {
+            ...t,
+            home_player1_id: row?.home_player1_id || null,
+            home_player2_id: row?.home_player2_id || null,
+            away_player1_id: row?.away_player1_id || null,
+            away_player2_id: row?.away_player2_id || null,
+          }
+        })
+        setFrameLineups(merged)
+        setLocalFrames(merged)
+      })
+  }, [match.id])
+
+  const save = async () => {
+    setSaving(true)
+    const rows = localFrames.map(f => ({
+      match_id: match.id,
+      frame_order: f.frame_order,
+      game_type: f.game_type,
+      is_doubles: f.is_doubles,
+      home_player1_id: f.home_player1_id || null,
+      home_player2_id: f.is_doubles ? (f.home_player2_id || null) : null,
+      away_player1_id: f.away_player1_id || null,
+      away_player2_id: f.is_doubles ? (f.away_player2_id || null) : null,
+    }))
+    await supabase.from('match_frame_lineups').upsert(rows, { onConflict: 'match_id,frame_order' })
+    setFrameLineups(localFrames)
+    setEditing(false)
+    setSaving(false)
+  }
+
+  const cancel = () => {
+    setLocalFrames(frameLineups)
+    setEditing(false)
+  }
+
+  const updateFrame = (frameOrder, field, value) => {
+    setLocalFrames(prev => prev.map(f => f.frame_order === frameOrder ? { ...f, [field]: value } : f))
+  }
+
+  const getPlayerName = (id, list) => list.find(p => p.id === id)?.name || null
+
+  if (frameLineups === null) return null
+
+  const assignedCount = frameLineups.filter(f =>
+    f.home_player1_id || f.away_player1_id
+  ).length
+
+  // Hide entirely when no lineup set and user not logged in
+  if (assignedCount === 0 && !session) return null
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+      {/* Header toggle */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center justify-between text-left group"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            Raspored mečeva
+          </span>
+          {assignedCount > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+              {assignedCount}/6
+            </span>
+          )}
+        </div>
+        <svg
+          className={`w-4 h-4 text-gray-400 dark:text-gray-600 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 flex flex-col gap-2">
+          {(editing ? localFrames : frameLineups).map(f => {
+            const homeOpts = homePlayers.map(p => ({ value: p.id, label: p.name }))
+            const awayOpts = awayPlayers.map(p => ({ value: p.id, label: p.name }))
+
+            if (editing) {
+              return (
+                <div key={f.frame_order} className="bg-gray-50 dark:bg-white/3 rounded-xl p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-gray-400 dark:text-gray-600 text-xs font-mono font-bold">#{f.frame_order}</span>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${GAME_COLOR[f.game_type]}`}>
+                      {GAME_LABEL[f.game_type]}
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded-full">
+                      {f.is_doubles ? 'Dubl' : 'Singl'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-1">
+                        {match.home_team?.name} I1
+                      </div>
+                      <CustomSelect
+                        value={f.home_player1_id || ''}
+                        onChange={v => updateFrame(f.frame_order, 'home_player1_id', v || null)}
+                        options={homeOpts}
+                        placeholder="— bez —"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-1">
+                        {match.away_team?.name} I1
+                      </div>
+                      <CustomSelect
+                        value={f.away_player1_id || ''}
+                        onChange={v => updateFrame(f.frame_order, 'away_player1_id', v || null)}
+                        options={awayOpts}
+                        placeholder="— bez —"
+                      />
+                    </div>
+                    {f.is_doubles && (
+                      <>
+                        <div>
+                          <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-1">
+                            {match.home_team?.name} I2
+                          </div>
+                          <CustomSelect
+                            value={f.home_player2_id || ''}
+                            onChange={v => updateFrame(f.frame_order, 'home_player2_id', v || null)}
+                            options={homeOpts}
+                            placeholder="— bez —"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-1">
+                            {match.away_team?.name} I2
+                          </div>
+                          <CustomSelect
+                            value={f.away_player2_id || ''}
+                            onChange={v => updateFrame(f.frame_order, 'away_player2_id', v || null)}
+                            options={awayOpts}
+                            placeholder="— bez —"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            }
+
+            // Read-only row
+            const hp1 = getPlayerName(f.home_player1_id, homePlayers)
+            const hp2 = getPlayerName(f.home_player2_id, homePlayers)
+            const ap1 = getPlayerName(f.away_player1_id, awayPlayers)
+            const ap2 = getPlayerName(f.away_player2_id, awayPlayers)
+            const homeNames = f.is_doubles
+              ? [hp1, hp2].filter(Boolean).join(' & ') || '—'
+              : (hp1 || '—')
+            const awayNames = f.is_doubles
+              ? [ap1, ap2].filter(Boolean).join(' & ') || '—'
+              : (ap1 || '—')
+
+            return (
+              <div key={f.frame_order} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
+                <span className="text-gray-400 dark:text-gray-600 text-xs font-mono font-bold w-5 shrink-0">#{f.frame_order}</span>
+                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${GAME_COLOR[f.game_type]}`}>
+                  {GAME_LABEL[f.game_type]}
+                </span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded-full shrink-0">
+                  {f.is_doubles ? 'Dubl' : 'Singl'}
+                </span>
+                <span className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-300 truncate">{homeNames}</span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-600 shrink-0">vs</span>
+                <span className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-300 truncate text-right">{awayNames}</span>
+              </div>
+            )
+          })}
+
+          {/* Edit controls */}
+          {session && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="mt-1 self-start text-[10px] font-semibold text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              {assignedCount > 0 ? 'Uredi raspored' : 'Dodaj raspored'}
+            </button>
+          )}
+          {editing && (
+            <div className="flex gap-1.5 mt-1">
+              <button
+                onClick={save}
+                disabled={saving}
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50"
+              >
+                {saving ? '...' : 'Spremi'}
+              </button>
+              <button
+                onClick={cancel}
+                className="text-[11px] px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+              >
+                Odustani
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function UpcomingCard({ match, players, session }) {
   const dateObj = new Date(match.match_date)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -63,6 +312,8 @@ function UpcomingCard({ match }) {
           </div>
         </div>
       </div>
+
+      <FrameLineupSection match={match} players={players} session={session} />
     </div>
   )
 }
@@ -122,22 +373,27 @@ function CompletedCard({ match }) {
 export default function Fixtures() {
   const { session } = useAuth()
   const [matches, setMatches] = useState([])
+  const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('upcoming')
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('matches')
-        .select(`
-          id, match_date, notes, home_team_id, away_team_id,
-          home_team:teams!matches_home_team_id_fkey(id, name),
-          away_team:teams!matches_away_team_id_fkey(id, name),
-          frames(id, home_score, away_score)
-        `)
-        .order('match_date', { ascending: true })
+      const [{ data: matchData }, { data: playerData }] = await Promise.all([
+        supabase
+          .from('matches')
+          .select(`
+            id, match_date, notes, home_team_id, away_team_id,
+            home_team:teams!matches_home_team_id_fkey(id, name),
+            away_team:teams!matches_away_team_id_fkey(id, name),
+            frames(id, home_score, away_score)
+          `)
+          .order('match_date', { ascending: true }),
+        supabase.from('players').select('id, name, team_id')
+      ])
 
-      setMatches(data || [])
+      setMatches(matchData || [])
+      setPlayers(playerData || [])
       setLoading(false)
     }
     load()
@@ -223,7 +479,7 @@ export default function Fixtures() {
           <div className="flex flex-col gap-3">
             {upcoming.map(m => (
               <div key={m.id}>
-                <UpcomingCard match={m} />
+                <UpcomingCard match={m} players={players} session={session} />
                 {session && (
                   <div className="flex justify-end mt-2 px-1">
                     <Link

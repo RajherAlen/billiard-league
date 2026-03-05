@@ -179,6 +179,26 @@ export default function AddResult() {
       setMatchDate(formatISOToDMY(data.match_date))
       setNotes(data.notes || '')
       setFixtureLocked(true)
+
+      // Pre-populate player fields from match_frame_lineups
+      const { data: pre } = await supabase
+        .from('match_frame_lineups')
+        .select('frame_order, home_player1_id, home_player2_id, away_player1_id, away_player2_id')
+        .eq('match_id', fixtureId)
+        .order('frame_order')
+      if (pre?.length) {
+        setFrames(prev => prev.map(f => {
+          const row = pre.find(r => r.frame_order === f.frame_order)
+          return row ? {
+            ...f,
+            home_player1_id: row.home_player1_id || '',
+            home_player2_id: row.home_player2_id || '',
+            away_player1_id: row.away_player1_id || '',
+            away_player2_id: row.away_player2_id || '',
+          } : f
+        }))
+      }
+
       setFixtureLoading(false)
     }
     loadFixture()
