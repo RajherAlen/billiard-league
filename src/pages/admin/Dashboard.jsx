@@ -3,6 +3,18 @@ import { useAuth } from '../../context/AuthContext'
 
 const cards = [
   {
+    to: '/admin/schedule',
+    label: 'Zakaži utakmicu',
+    description: 'Dodaj utakmicu u raspored bez rezultata',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    iconBg: 'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400',
+    border: 'hover:border-purple-200 dark:hover:border-purple-500/30',
+  },
+  {
     to: '/admin/result/new',
     label: 'Dodaj rezultat utakmice',
     description: 'Unesi rezultate meč po meč za utakmicu',
@@ -27,9 +39,9 @@ const cards = [
     border: 'hover:border-blue-200 dark:hover:border-blue-500/30',
   },
   {
-    to: '/matches',
-    label: 'Pregledaj sve utakmice',
-    description: 'Pregledaj rezultate i detalje mečeva',
+    to: '/fixtures',
+    label: 'Pregledaj raspored',
+    description: 'Nadolazeće utakmice i prošli rezultati',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

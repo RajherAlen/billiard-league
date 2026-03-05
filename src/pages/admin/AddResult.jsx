@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import CustomSelect from '../../components/CustomSelect'
 
@@ -134,11 +134,13 @@ function ScoreCounter({ value, onChange, max }) {
 
 export default function AddResult() {
   const navigate = useNavigate()
-  const draft = loadDraft()
+  const [searchParams] = useSearchParams()
+  const fixtureId = searchParams.get('fixture') || null
+
+  const draft = fixtureId ? {} : loadDraft() // don't restore draft when editing a fixture
   const datePickerRef = useRef(null)
 
-  // Restore from session storage on mount
-  const [step, setStep] = useState(() => draft.step ?? 1)
+  const [step, setStep] = useState(() => fixtureId ? 1 : (draft.step ?? 1))
   const [homeTeamId, setHomeTeamId] = useState(() => draft.homeTeamId ?? '')
   const [awayTeamId, setAwayTeamId] = useState(() => draft.awayTeamId ?? '')
   const [matchDate, setMatchDate] = useState(() => formatISOToDMY(normalizeStoredDate(draft.matchDate) || getTodayISO()))
@@ -149,16 +151,44 @@ export default function AddResult() {
   const [players, setPlayers] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [fixtureLoading, setFixtureLoading] = useState(!!fixtureId)
+  const [fixtureLocked, setFixtureLocked] = useState(false)
 
   useEffect(() => {
     supabase.from('teams').select('*').order('name').then(({ data }) => setTeams(data || []))
     supabase.from('players').select('*').order('name').then(({ data }) => setPlayers(data || []))
   }, [])
 
-  // Persist draft to sessionStorage on every change
+  // Load fixture data if ?fixture= param is present
   useEffect(() => {
+    if (!fixtureId) return
+    async function loadFixture() {
+      setFixtureLoading(true)
+      const { data, error: err } = await supabase
+        .from('matches')
+        .select('id, home_team_id, away_team_id, match_date, notes')
+        .eq('id', fixtureId)
+        .single()
+      if (err || !data) {
+        setError('Nije moguće učitati utakmicu. Pokušaj ponovo.')
+        setFixtureLoading(false)
+        return
+      }
+      setHomeTeamId(data.home_team_id)
+      setAwayTeamId(data.away_team_id)
+      setMatchDate(formatISOToDMY(data.match_date))
+      setNotes(data.notes || '')
+      setFixtureLocked(true)
+      setFixtureLoading(false)
+    }
+    loadFixture()
+  }, [fixtureId])
+
+  // Persist draft to sessionStorage (only when not in fixture mode)
+  useEffect(() => {
+    if (fixtureId) return
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ step, homeTeamId, awayTeamId, matchDate, notes, frames }))
-  }, [step, homeTeamId, awayTeamId, matchDate, notes, frames])
+  }, [step, homeTeamId, awayTeamId, matchDate, notes, frames, fixtureId])
 
   const teamOptions = teams.map(t => ({ value: t.id, label: t.name }))
   const homePlayers = players.filter(p => p.team_id === homeTeamId).map(p => ({ value: p.id, label: p.name }))
@@ -212,15 +242,28 @@ export default function AddResult() {
     }
     setSaving(true); setError('')
 
-    const { data: matchData, error: matchError } = await supabase
-      .from('matches').insert({ home_team_id: homeTeamId, away_team_id: awayTeamId, match_date: matchDateISO, notes: notes || null })
-      .select().single()
+    let matchId = fixtureId
 
-    if (matchError) { setError(matchError.message); setSaving(false); return }
+    if (!fixtureId) {
+      // Create a new match record
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches').insert({ home_team_id: homeTeamId, away_team_id: awayTeamId, match_date: matchDateISO, notes: notes || null })
+        .select().single()
+
+      if (matchError) { setError(matchError.message); setSaving(false); return }
+      matchId = matchData.id
+    } else {
+      // Update existing fixture date/notes if they changed
+      const { error: updateErr } = await supabase
+        .from('matches')
+        .update({ match_date: matchDateISO, notes: notes || null })
+        .eq('id', fixtureId)
+      if (updateErr) { setError(updateErr.message); setSaving(false); return }
+    }
 
     const { error: framesError } = await supabase.from('frames').insert(
       frames.map(f => ({
-        match_id: matchData.id,
+        match_id: matchId,
         frame_order: f.frame_order,
         game_type: f.game_type,
         is_doubles: f.is_doubles,
@@ -237,7 +280,7 @@ export default function AddResult() {
     if (framesError) { setError(framesError.message); setSaving(false); return }
 
     sessionStorage.removeItem(DRAFT_KEY)
-    navigate(`/matches/${matchData.id}`)
+    navigate(`/matches/${matchId}`)
   }
 
   const homePoints = frames.reduce((s, f) => s + f.home_score, 0)
@@ -246,7 +289,7 @@ export default function AddResult() {
     const max = GAME_FRAMES[f.game_type]
     return f.home_score >= max || f.away_score >= max
   }).length
-  const hasDraft = step === 2 || homeTeamId || awayTeamId || frames.some(f => f.home_score + f.away_score > 0)
+  const hasDraft = !fixtureId && (step === 2 || homeTeamId || awayTeamId || frames.some(f => f.home_score + f.away_score > 0))
 
   const openDatePicker = () => {
     if (!datePickerRef.current) return
@@ -257,12 +300,31 @@ export default function AddResult() {
     datePickerRef.current.focus()
   }
 
+  if (fixtureLoading) {
+    return (
+      <div className="flex items-center justify-center py-32 text-gray-400 dark:text-gray-600">
+        <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
         <div>
           <p className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold uppercase tracking-widest mb-2">Admin</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dodaj rezultat</h1>
+          {fixtureId && fixtureLocked && (
+            <p className="text-sm text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Zakazana utakmica: {homeTeamName} vs {awayTeamName}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 mt-1">
           {hasDraft && (
@@ -351,11 +413,29 @@ export default function AddResult() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Domaća ekipa</label>
-              <CustomSelect value={homeTeamId} onChange={setHomeTeamId} options={teamOptions} placeholder="Odaberi ekipu" />
+              {fixtureLocked ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/8">
+                  <svg className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{homeTeamName}</span>
+                </div>
+              ) : (
+                <CustomSelect value={homeTeamId} onChange={setHomeTeamId} options={teamOptions} placeholder="Odaberi ekipu" />
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Gostujuća ekipa</label>
-              <CustomSelect value={awayTeamId} onChange={setAwayTeamId} options={teamOptions} placeholder="Odaberi ekipu" />
+              {fixtureLocked ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/8">
+                  <svg className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{awayTeamName}</span>
+                </div>
+              ) : (
+                <CustomSelect value={awayTeamId} onChange={setAwayTeamId} options={teamOptions} placeholder="Odaberi ekipu" />
+              )}
             </div>
           </div>
           <div>
