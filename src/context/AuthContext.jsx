@@ -16,8 +16,15 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signIn = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password })
+  const signIn = async (identifier, password) => {
+    let email = identifier
+    if (!identifier.includes('@')) {
+      const { data, error } = await supabase.rpc('get_email_by_username', { p_username: identifier })
+      if (error || !data) return { error: error || new Error('Username not found') }
+      email = data
+    }
+    return supabase.auth.signInWithPassword({ email, password })
+  }
 
   const signOut = () => supabase.auth.signOut()
 

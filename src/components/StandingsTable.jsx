@@ -4,16 +4,15 @@ const MEDALS = ['🥇', '🥈', '🥉']
 
 const FORM_STYLES = {
   W: 'bg-emerald-500 text-white',
-  D: 'bg-amber-400 text-white',
   L: 'bg-red-400 text-white',
 }
-const FORM_LABELS = { W: 'P', D: 'N', L: 'I' }
+const FORM_LABELS = { W: 'P', L: 'I' }
 
 function FormPill({ result }) {
   return (
     <span
       className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${FORM_STYLES[result] || 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}
-      title={result === 'W' ? 'Pobjeda' : result === 'D' ? 'Neriješeno' : 'Poraz'}
+      title={result === 'W' ? 'Pobjeda' : 'Poraz'}
     >
       {FORM_LABELS[result] || '?'}
     </span>
@@ -45,7 +44,6 @@ export default function StandingsTable({ standings }) {
             <th className="px-3 py-3.5 text-left text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Ekipa</th>
             <th className="px-2 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" title="Odigrane utakmice">O</th>
             <th className="px-2 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" title="Pobjede">P</th>
-            <th className="px-2 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" title="Nerijeseno">N</th>
             <th className="px-2 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" title="Izgubljene">I</th>
             <th className="px-3 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest hidden md:table-cell" title="Forma zadnjih 5">Forma</th>
             <th className="px-4 py-3.5 text-center text-gray-400 dark:text-gray-500 text-xs font-semibold uppercase tracking-widest">Bod.</th>
@@ -82,7 +80,7 @@ export default function StandingsTable({ standings }) {
                     )}
                     <div className="sm:hidden flex items-center gap-2 w-full mt-0.5">
                       <span className="text-[10px] text-gray-400 dark:text-gray-600 tabular-nums">
-                        {row.wins ?? 0}P {row.draws ?? 0}N {row.losses ?? 0}I
+                        {row.wins ?? 0}P {row.losses ?? 0}I
                       </span>
                       {row.form && row.form.length > 0 && (
                         <div className="flex items-center gap-0.5">
@@ -96,9 +94,6 @@ export default function StandingsTable({ standings }) {
                 <td className="px-2 py-4 text-center text-gray-500 dark:text-gray-400 tabular-nums hidden sm:table-cell">{row.played ?? 0}</td>
                 <td className="px-2 py-4 text-center tabular-nums hidden sm:table-cell">
                   <span className={(row.wins ?? 0) > 0 ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}>{row.wins ?? 0}</span>
-                </td>
-                <td className="px-2 py-4 text-center tabular-nums hidden sm:table-cell">
-                  <span className={(row.draws ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-600'}>{row.draws ?? 0}</span>
                 </td>
                 <td className="px-2 py-4 text-center tabular-nums hidden sm:table-cell">
                   <span className={(row.losses ?? 0) > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'}>{row.losses ?? 0}</span>
@@ -125,7 +120,7 @@ export default function StandingsTable({ standings }) {
 
           {standings.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-4 py-16 text-center">
+              <td colSpan={7} className="px-4 py-16 text-center">
                 <div className="text-4xl mb-3">🎱</div>
                 <div className="text-base font-medium text-gray-500 dark:text-gray-400">Sezona jos nije pocela</div>
                 <div className="text-sm text-gray-400 dark:text-gray-600 mt-1">Rezultati ce se pojaviti ovdje nakon odigranih utakmica</div>
@@ -138,7 +133,7 @@ export default function StandingsTable({ standings }) {
       {standings.length > 0 && (
         <div className="px-4 py-3 border-t border-gray-100 dark:border-white/5 flex items-center gap-4 flex-wrap">
           <span className="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest">Legenda:</span>
-          {[['O', 'Odigrane'], ['P', 'Pobjede'], ['N', 'Nerijeseno'], ['I', 'Izgubljene']].map(function(item) {
+          {[['O', 'Odigrane'], ['P', 'Pobjede'], ['I', 'Izgubljene']].map(function(item) {
             return (
               <span key={item[0]} className="text-[10px] text-gray-400 dark:text-gray-600">
                 <span className="font-bold text-gray-600 dark:text-gray-400">{item[0]}</span> = {item[1]}

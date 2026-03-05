@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 export default function Login() {
   const { signIn, session } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -17,8 +17,8 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await signIn(email, password)
-    if (error) setError('Pogrešan email ili lozinka')
+    const { error } = await signIn(identifier, password)
+    if (error) setError('Pogrešno korisničko ime/email ili lozinka')
     else navigate('/admin')
     setLoading(false)
   }
@@ -35,14 +35,14 @@ export default function Login() {
         <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/8 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-none">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-gray-700 dark:text-gray-300 text-xs font-semibold uppercase tracking-widest mb-1.5">Email</label>
+              <label className="block text-gray-700 dark:text-gray-300 text-xs font-semibold uppercase tracking-widest mb-1.5">Korisničko ime ili email</label>
               <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 required
-                autoComplete="email"
-                placeholder="vas@email.com"
+                autoComplete="username"
+                placeholder="korisnik ili vas@email.com"
                 className="w-full rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 border border-gray-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>

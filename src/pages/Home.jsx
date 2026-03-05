@@ -23,11 +23,10 @@ export default function Home() {
           team_name: t.name,
           played: 0,
           wins: 0,
-          draws: 0,
           losses: 0,
           framePoints: 0,
           frameAgainst: 0,
-          matchResults: [], // {date, result: 'W'|'D'|'L'}
+          matchResults: [], // {date, result: 'W'|'L'}
         }
       })
 
@@ -47,7 +46,6 @@ export default function Home() {
           t.framePoints += homePts
           t.frameAgainst += awayPts
           if (homeResult === 'W') t.wins++
-          else if (homeResult === 'D') t.draws++
           else t.losses++
           t.matchResults.push({ date: m.match_date, result: homeResult })
         }
@@ -58,7 +56,6 @@ export default function Home() {
           t.framePoints += awayPts
           t.frameAgainst += homePts
           if (awayResult === 'W') t.wins++
-          else if (awayResult === 'D') t.draws++
           else t.losses++
           t.matchResults.push({ date: m.match_date, result: awayResult })
         }
@@ -67,7 +64,7 @@ export default function Home() {
       const computed = Object.values(teamMap)
         .map(t => ({
           ...t,
-          matchPoints: t.wins * 3 + t.draws,
+          matchPoints: t.wins * 3,
           frameDiff: t.framePoints - t.frameAgainst,
           form: t.matchResults
             .sort((a, b) => new Date(b.date) - new Date(a.date))
