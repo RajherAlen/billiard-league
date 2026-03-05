@@ -376,6 +376,7 @@ export default function Fixtures() {
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('upcoming')
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -398,6 +399,14 @@ export default function Fixtures() {
     }
     load()
   }, [])
+
+  const deleteMatch = async (id) => {
+    if (!window.confirm('Obriši ovu utakmicu?')) return
+    setDeletingId(id)
+    await supabase.from('matches').delete().eq('id', id)
+    setMatches(prev => prev.filter(m => m.id !== id))
+    setDeletingId(null)
+  }
 
   const upcoming = matches
     .filter(m => !m.frames || m.frames.length === 0)
@@ -481,7 +490,17 @@ export default function Fixtures() {
               <div key={m.id}>
                 <UpcomingCard match={m} players={players} session={session} />
                 {session && (
-                  <div className="flex justify-end mt-2 px-1">
+                  <div className="flex justify-between mt-2 px-1">
+                    <button
+                      onClick={() => deleteMatch(m.id)}
+                      disabled={deletingId === m.id}
+                      className="text-xs font-semibold text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1 transition-colors disabled:opacity-40"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      {deletingId === m.id ? 'Brišem...' : 'Obriši'}
+                    </button>
                     <Link
                       to={`/admin/result/new?fixture=${m.id}`}
                       className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1 transition-colors"
